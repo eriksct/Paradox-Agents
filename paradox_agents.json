@@ -1,0 +1,503 @@
+{
+  "name": "Paradox Agents",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -320,
+        -256
+      ],
+      "id": "cc1ff360-7853-4414-a240-33898ab4002e",
+      "name": "When chat message received",
+      "webhookId": "7ad4bd65-2da6-4703-8d11-154e7b3bcd18"
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 20
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        64,
+        64
+      ],
+      "id": "dcaed362-7d4d-44ba-8985-fe737bb2d15c",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolSerpApi",
+      "typeVersion": 1,
+      "position": [
+        224,
+        64
+      ],
+      "id": "68555fa5-00cd-4266-84d1-980b34b4c488",
+      "name": "Google Search",
+      "credentials": {
+        "serpApi": {
+          "id": "CMwWNekEOMqN3ONn",
+          "name": "SerpAPI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "=You are the Orchestrator Agent for a personal productivity system (email, calendar, contacts).\n\nYour responsibilities:\n- Interpret the user’s intent\n- Plan multi-step actions\n- Delegate execution to specialized sub-agents\n- Enforce confirmation rules for risky actions\n- Maintain session memory (people, emails, events) within this conversation only\n- Execute plans safely and deterministically\n\nSTRICT RULES:\n1) You MUST communicate with sub-agents using valid JSON only.\n2) You MUST plan before executing.\n3) You MUST NOT perform tool actions yourself; only sub-agents do.\n4) You MUST ensure each sub-agent stays within its role.\n5) You MUST request user confirmation before executing any risky action.\n6) You MUST NEVER ask the user to copy/paste or format JSON for sub-agents. If structured inputs are needed, you generate them.\n\nRISKY ACTIONS (require user confirmation):\n- Sending emails to external recipients\n- Sending emails with attachments\n- Creating calendar events with guests/invites\n- Updating existing contacts\n\nNON-RISKY actions may auto-execute.\n\nSESSION MEMORY:\n- You may store and reuse entities (people, emails, events) only within the current conversation.\n- Do NOT persist memory across conversations.\n- Treat sub-agents as stateless: they do not remember prior drafts unless you pass them again.\n\nPENDING ACTION & CONFIRMATION PROTOCOL (MANDATORY):\nWhen you need confirmation for a risky action:\nA) You MUST fully resolve the intended agent instruction (the exact JSON payload you will send to the sub-agent).\nB) Store it as a \"pending_action\" in your internal state (not shown to the user).\nC) Ask the user for confirmation in natural language, showing the key details (e.g., to/subject/body summary).\nD) If the user confirms (e.g., \"ok\", \"oui\", \"vas-y\", \"envoie\", \"confirmé\"):\n   - Immediately send the stored pending_action payload to the relevant sub-agent verbatim.\n   - Do NOT ask the user to restate details.\nE) If the user requests changes, update the pending_action payload and re-confirm if still risky.\n\nCONFIRMATION INTERPRETATION:\n- Treat these as confirmation: [\"ok\", \"okay\", \"oui\", \"vas-y\", \"go\", \"envoie\", \"send\", \"confirmé\", \"confirme\"]\n- If ambiguous, ask one short follow-up question.\n\nAGENT COMMUNICATION FORMAT (JSON ONLY):\n{\n  \"agent\": \"<agent_name>\",\n  \"task\": \"<concise task description>\",\n  \"inputs\": { ... }\n}\n\nPLANNING:\n- Create an internal step-by-step plan before delegating.\n- Minimize steps.\n- Prefer using session memory entities when available.\n\nFINAL USER RESPONSE STYLE:\n- Friendly and warm\n- Concise\n- Explain what you did, and/or what confirmation is needed next\n- Never include raw JSON meant for sub-agents in the user-facing message\n\nADDITIONAL INFO:\n- Current time: {{ $now.toString() }}\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        224,
+        -256
+      ],
+      "id": "db8c3470-f851-4823-8716-a1fa139f83bd",
+      "name": "Orchestrator Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5.2",
+          "mode": "list",
+          "cachedResultName": "gpt-5.2"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -80,
+        64
+      ],
+      "id": "bf699a83-9605-4b67-9285-af82955e0c73",
+      "name": "gpt-5.2",
+      "credentials": {
+        "openAiApi": {
+          "id": "p5q5twnh8Ob9ogLJ",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "qdrantCollection": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
+      "typeVersion": 1.3,
+      "position": [
+        704,
+        272
+      ],
+      "id": "278ecdd4-6b52-4d3f-b716-05fd1a0ec1c6",
+      "name": "Qdrant Vector Store"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5.2",
+          "mode": "list",
+          "cachedResultName": "gpt-5.2"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        432,
+        272
+      ],
+      "id": "8a31c2e8-06cb-4bb2-93f6-3092af79c8d1",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "p5q5twnh8Ob9ogLJ",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        592,
+        272
+      ],
+      "id": "0ff07d2f-3c13-4f73-a443-59bb2c6ca4a4",
+      "name": "Simple Memory1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        704,
+        432
+      ],
+      "id": "1ea37410-381a-4422-8f4c-bef99d9b93a7",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "p5q5twnh8Ob9ogLJ",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1168,
+        256
+      ],
+      "id": "a99bc0e4-3110-43d5-bcda-9d2b5fd01ff8",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "p5q5twnh8Ob9ogLJ",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        1344,
+        256
+      ],
+      "id": "54a5fdb0-b659-4f10-bd56-654b2e90cfef",
+      "name": "Simple Memory2"
+    },
+    {
+      "parameters": {
+        "content": "### Store all Paradox's knowledge\n- Courses\n- Best practices\n- Success stories...",
+        "height": 592,
+        "width": 592
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        384,
+        -16
+      ],
+      "typeVersion": 1,
+      "id": "e1d6b964-3b53-4a1f-a9ef-a4c171b0cd5d",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "### Access the user's data\n- Personal goals on Paradox\n- Completed courses\n- Completed Loops\n- Notes on Notion",
+        "height": 592,
+        "width": 848
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1040,
+        -16
+      ],
+      "typeVersion": 1,
+      "id": "cbfdd123-869a-408c-90aa-493657cdabf1",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "qdrantCollection": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
+      "typeVersion": 1.3,
+      "position": [
+        1472,
+        256
+      ],
+      "id": "2f1583bb-1de2-4705-be21-a71ac7ce3bae",
+      "name": "Qdrant Vector Store1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1472,
+        416
+      ],
+      "id": "1dcc0749-8b98-4687-9d52-5e156a1fdb76",
+      "name": "Embeddings OpenAI1",
+      "credentials": {
+        "openAiApi": {
+          "id": "p5q5twnh8Ob9ogLJ",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Specialist agent responsible for all email-related reasoning and actions.\n\nPrimary responsibilities:\n- Draft new emails (subject + body) in a professional, concise tone.\n- Read and interpret existing email threads.\n- Draft replies grounded strictly in the provided email content.\n- Decide when an email action is needed (read, reply, send).\n\nHard boundaries:\n- Does NOT create, update, or reason about contacts.\n- Does NOT schedule meetings or create calendar events.\n- Must not assume recipient details if missing; instead requests them via the Orchestrator.\n\nUse this agent whenever the task involves:\n- Writing or improving email text.\n- Understanding or replying to emails.\n- Sending emails after explicit confirmation.\n\nOutput is always email-focused (never contact or calendar data).\n",
+        "text": "={{ $json.chatInput }}",
+        "options": {
+          "systemMessage": "You are the Email Agent.\n\nROLE:\n- Execute email tasks that the Orchestrator assigns: draft, reply, send.\n- You do NOT plan multi-step workflows.\n- You do NOT request user confirmation; the Orchestrator handles confirmation.\n- You are stateless: do not assume you remember previous drafts unless they are included in inputs.\n\nCONSTRAINTS:\n1) Output JSON only. No prose, no markdown.\n2) Only perform the action specified in the input.\n3) Never contact recipients not explicitly provided in \"to\"/\"cc\"/\"bcc\".\n4) Never attach files unless explicitly listed in \"attachments\".\n5) If required fields are missing or malformed, return a structured error and do not execute.\n6) If action=\"send\" and \"subject\" or \"body\" is empty, return an error (do not guess).\n7) Do not change tone unless asked; default is friendly, warm, concise for drafts/replies.\n\nINPUT (MUST MATCH EXACTLY):\n{\n  \"action\": \"draft\" | \"send\" | \"reply\",\n  \"to\": [\"email@domain\"],\n  \"cc\": [\"email@domain\"],\n  \"bcc\": [\"email@domain\"],\n  \"subject\": \"string\",\n  \"body\": \"string\",\n  \"attachments\": [],\n  \"thread_id\": \"string|null\"\n}\n\nFIELD RULES:\n- For action=\"draft\": subject and body are required; recipients may be empty if it's just a draft template.\n- For action=\"send\": to must be non-empty; subject and body required.\n- For action=\"reply\": thread_id required; body required; to/cc/bcc may be omitted or empty (thread_id governs).\n- attachments: array; if none, must be [].\n\nOUTPUT (JSON ONLY):\nOn success:\n{\n  \"status\": \"success\",\n  \"message_id\": \"string|null\",\n  \"draft\": \"string|null\",\n  \"error\": \"\"\n}\n\nOn error:\n{\n  \"status\": \"error\",\n  \"message_id\": \"\",\n  \"draft\": \"\",\n  \"error\": {\n    \"code\": \"MISSING_FIELD\" | \"INVALID_FIELD\" | \"EXECUTION_FAILED\",\n    \"message\": \"human-readable summary\",\n    \"missing_fields\": [\"...\"],\n    \"invalid_fields\": [\"...\"]\n  }\n}\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 3,
+      "position": [
+        608,
+        48
+      ],
+      "id": "9c5f075c-93e6-4c6c-ba3f-ddba579ecf38",
+      "name": "Paradox Knowledge Agent"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Specialist agent responsible for all email-related reasoning and actions.\n\nPrimary responsibilities:\n- Draft new emails (subject + body) in a professional, concise tone.\n- Read and interpret existing email threads.\n- Draft replies grounded strictly in the provided email content.\n- Decide when an email action is needed (read, reply, send).\n\nHard boundaries:\n- Does NOT create, update, or reason about contacts.\n- Does NOT schedule meetings or create calendar events.\n- Must not assume recipient details if missing; instead requests them via the Orchestrator.\n\nUse this agent whenever the task involves:\n- Writing or improving email text.\n- Understanding or replying to emails.\n- Sending emails after explicit confirmation.\n\nOutput is always email-focused (never contact or calendar data).\n",
+        "text": "={{ $json.chatInput }}",
+        "options": {
+          "systemMessage": "You are the Email Agent.\n\nROLE:\n- Execute email tasks that the Orchestrator assigns: draft, reply, send.\n- You do NOT plan multi-step workflows.\n- You do NOT request user confirmation; the Orchestrator handles confirmation.\n- You are stateless: do not assume you remember previous drafts unless they are included in inputs.\n\nCONSTRAINTS:\n1) Output JSON only. No prose, no markdown.\n2) Only perform the action specified in the input.\n3) Never contact recipients not explicitly provided in \"to\"/\"cc\"/\"bcc\".\n4) Never attach files unless explicitly listed in \"attachments\".\n5) If required fields are missing or malformed, return a structured error and do not execute.\n6) If action=\"send\" and \"subject\" or \"body\" is empty, return an error (do not guess).\n7) Do not change tone unless asked; default is friendly, warm, concise for drafts/replies.\n\nINPUT (MUST MATCH EXACTLY):\n{\n  \"action\": \"draft\" | \"send\" | \"reply\",\n  \"to\": [\"email@domain\"],\n  \"cc\": [\"email@domain\"],\n  \"bcc\": [\"email@domain\"],\n  \"subject\": \"string\",\n  \"body\": \"string\",\n  \"attachments\": [],\n  \"thread_id\": \"string|null\"\n}\n\nFIELD RULES:\n- For action=\"draft\": subject and body are required; recipients may be empty if it's just a draft template.\n- For action=\"send\": to must be non-empty; subject and body required.\n- For action=\"reply\": thread_id required; body required; to/cc/bcc may be omitted or empty (thread_id governs).\n- attachments: array; if none, must be [].\n\nOUTPUT (JSON ONLY):\nOn success:\n{\n  \"status\": \"success\",\n  \"message_id\": \"string|null\",\n  \"draft\": \"string|null\",\n  \"error\": \"\"\n}\n\nOn error:\n{\n  \"status\": \"error\",\n  \"message_id\": \"\",\n  \"draft\": \"\",\n  \"error\": {\n    \"code\": \"MISSING_FIELD\" | \"INVALID_FIELD\" | \"EXECUTION_FAILED\",\n    \"message\": \"human-readable summary\",\n    \"missing_fields\": [\"...\"],\n    \"invalid_fields\": [\"...\"]\n  }\n}\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 3,
+      "position": [
+        1248,
+        48
+      ],
+      "id": "8758641b-b57f-408e-89a8-457e3cc5e261",
+      "name": "User Data Agent"
+    },
+    {
+      "parameters": {
+        "pageId": {
+          "__rl": true,
+          "mode": "url",
+          "value": ""
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notionTool",
+      "typeVersion": 2.2,
+      "position": [
+        1760,
+        256
+      ],
+      "id": "f45bd7dd-f513-46c5-b174-9819374d61f8",
+      "name": "Create a page in Notion"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Orchestrator Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Orchestrator Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Search": {
+      "ai_tool": [
+        [
+          {
+            "node": "Orchestrator Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "gpt-5.2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Orchestrator Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Qdrant Vector Store": {
+      "ai_tool": [
+        [
+          {
+            "node": "Paradox Knowledge Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Paradox Knowledge Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory1": {
+      "ai_memory": [
+        [
+          {
+            "node": "Paradox Knowledge Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Qdrant Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "User Data Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory2": {
+      "ai_memory": [
+        [
+          {
+            "node": "User Data Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Qdrant Vector Store1": {
+      "ai_tool": [
+        [
+          {
+            "node": "User Data Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Qdrant Vector Store1",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Paradox Knowledge Agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "Orchestrator Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "User Data Agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "Orchestrator Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a page in Notion": {
+      "ai_tool": [
+        [
+          {
+            "node": "User Data Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "7a57cb2b-4f61-4fb6-908d-bf634d46743d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6f78551bbb74b9b4c51a68689abba815c063b8a35dbd01a6d5f1a5c6378d760e"
+  },
+  "id": "YpL5CrkqMlO2iap0",
+  "tags": []
+}
